@@ -68,6 +68,16 @@ export default function BookingModal({ isOpen, onClose, date, slot, selectedAsse
 
             const specificAssetId = assetGroup.assetIds[0]; // Book the first available one in the group
 
+            // Construct patron_data matching the application's structure
+            // The official app fetches holds, checkouts, and fines. We will try sending empty arrays
+            // as we don't need to display them, but the server might expect the structure.
+            const patronPayload = {
+                patron: { barcode: barcode },
+                holds: [],
+                checkouts: [],
+                fines: []
+            };
+
             const payload = {
                 client_id: CLIENT_ID,
                 location_id: LOCATION_ID,
@@ -75,17 +85,14 @@ export default function BookingModal({ isOpen, onClose, date, slot, selectedAsse
                 group_id: assetGroup.groupId,
                 asset_id: specificAssetId,
                 start_time: startTime,
-                slot: 0, // Slot index seems to be ignored or calculated by start_time/block_size in backend? In JS it was derived from route params. Let's try 0 or maybe passing nothing? 
-                // JS code: `slot: this.slot` where `this.slot` comes from route param.
-                // However, based on API usage elsewhere, start_time + asset_id determines the block.
-                // Let's assume 0 is safe or try to calculate if needed.
-                booking_length: 60, // 60 mins default block size
+                slot: slot, // Slot index (hour for 60min blocks)
+                booking_length: 60,
                 first_name: patronData.data.names[0].first_name,
                 last_name: patronData.data.names[0].last_name,
                 email: patronData.data.emails?.[0] || '',
                 cell: patronData.data.phones?.[0] || '',
                 custom_questions: "",
-                patron_data: JSON.stringify(patronData),
+                patron_data: JSON.stringify(patronPayload),
                 booking_source: "WEB_V1",
                 availability_type: "INPERSON"
             };
