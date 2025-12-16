@@ -1,0 +1,93 @@
+.container {
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 2rem;
+    max-height: calc(100vh - 150px);
+    overflow-y: auto;
+}
+
+.title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #fff;
+}
+
+.categoryGroup {
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 0.5rem;
+}
+
+.categoryHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.expandButton {
+    background: none;
+    border: none;
+    color: #ddd;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    flex: 1;
+    padding: 0.5rem 0;
+}
+
+.expandButton:hover {
+    color: #fff;
+}
+
+.selectAllButton {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #aaa;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.selectAllButton:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-left: 0.5rem;
+}
+
+.item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    padding: 0.4rem 0.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
+    transition: background 0.2s;
+    font-size: 0.9rem;
+}
+
+.item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.checkbox {
+    accent-color: #0070f3;
+    width: 1rem;
+    height: 1rem;
+}
+
+.name {
+    color: #ccc;
+}
