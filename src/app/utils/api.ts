@@ -39,6 +39,7 @@ export interface AvailabilitySlot {
     date: string; // YYYY-MM-DD
     hour: number; // 0-23
     available: boolean;
+    availableAssetIds: string[]; // List of specific asset IDs available at this time
 }
 
 export interface AssetAvailability {
@@ -73,28 +74,39 @@ export async function fetchAssetAvailability(assetId: string, startDate: string)
     }
 
     const responses = await Promise.all(promises);
-    const allSlots: AvailabilitySlot[] = [];
+    const allSlots: Map<string, AvailabilitySlot> = new Map();
 
     responses.forEach((data, weekIndex) => {
-        if (!data || !data.data || !data.data.assets || !data.data.assets[0]) return;
+        if (!data || !data.data || !data.data.assets) return;
 
-        const availabilityGrid = data.data.assets[0].availability;
         const weekStart = new Date(start);
         weekStart.setDate(start.getDate() + (weekIndex * 7));
 
-        availabilityGrid.forEach((daySlots: boolean[], dayIndex: number) => {
-            const currentDate = new Date(weekStart);
-            currentDate.setDate(weekStart.getDate() + dayIndex);
-            const dateStr = currentDate.toISOString().split('T')[0];
+        data.data.assets.forEach((asset: any) => {
+            const availabilityGrid = asset.availability;
+            const specificAssetId = asset.id;
 
-            daySlots.forEach((isAvailable: boolean, hour: number) => {
-                // Avoid duplicates if weeks overlap (though simply adding 7 days shouldn't overlap)
-                // But let's check if we already have this slot just in case
-                // Actually, simple push is faster, we can filter later if needed.
-                allSlots.push({
-                    date: dateStr,
-                    hour: hour,
-                    available: isAvailable,
+            availabilityGrid.forEach((daySlots: boolean[], dayIndex: number) => {
+                const currentDate = new Date(weekStart);
+                currentDate.setDate(weekStart.getDate() + dayIndex);
+                const dateStr = currentDate.toISOString().split('T')[0];
+
+                daySlots.forEach((isAvailable: boolean, hour: number) => {
+                    const key = `${dateStr}-${hour}`;
+                    if (!allSlots.has(key)) {
+                        allSlots.set(key, {
+                            date: dateStr,
+                            hour: hour,
+                            available: false,
+                            availableAssetIds: []
+                        });
+                    }
+
+                    const slot = allSlots.get(key)!;
+                    if (isAvailable) {
+                        slot.available = true;
+                        slot.availableAssetIds.push(String(specificAssetId));
+                    }
                 });
             });
         });
@@ -102,7 +114,7 @@ export async function fetchAssetAvailability(assetId: string, startDate: string)
 
     return {
         assetId,
-        slots: allSlots,
+        slots: Array.from(allSlots.values()),
     };
 }
 

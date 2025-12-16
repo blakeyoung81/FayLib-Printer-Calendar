@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { AssetAvailability, ASSETS } from '../app/utils/api';
+import BookingModal from './BookingModal';
 import styles from './Calendar.module.css';
 
 interface CalendarProps {
@@ -11,6 +12,8 @@ interface CalendarProps {
 
 export default function Calendar({ availability, currentDate, onMonthChange, requireAllAvailable = false }: CalendarProps) {
     const [selectedDay, setSelectedDay] = useState<string | null>(null);
+    const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+    const [bookingSlot, setBookingSlot] = useState<number | null>(null);
 
     const daysInMonth = useMemo(() => {
         const year = currentDate.getFullYear();
@@ -63,6 +66,31 @@ export default function Calendar({ availability, currentDate, onMonthChange, req
         }
 
         return { totalSlots, availableSlots, assetsWithAvailability, totalAssets };
+    };
+
+    const handleOpenBooking = (hour: number) => {
+        setBookingSlot(hour);
+        setIsBookingModalOpen(true);
+    };
+
+    // Prepare data for Booking Modal
+    const getBookingData = () => {
+        if (!selectedDay || bookingSlot === null) return [];
+
+        return availability.map(asset => {
+            const groupDef = ASSETS.find(a => a.id === asset.assetId);
+            const slot = asset.slots.find(s => s.date === selectedDay && s.hour === bookingSlot);
+
+            // Only include if it's supposed to be booked (based on availability or user intent?)
+            // If the user hasn't filtered specifically, we include all selected assets.
+            // But we can only book if available.
+
+            return {
+                groupName: groupDef?.name || asset.assetId,
+                groupId: asset.assetId,
+                assetIds: slot && slot.available ? slot.availableAssetIds : []
+            };
+        }).filter(item => item.assetIds.length > 0); // Only pass available items
     };
 
     const handlePrevMonth = () => {
@@ -132,7 +160,17 @@ export default function Calendar({ availability, currentDate, onMonthChange, req
                 <div className={styles.detailsPanel}>
                     <div className={styles.detailsHeader}>
                         <h3>Availability for {selectedDay}</h3>
-                        <button className={styles.closeButton} onClick={() => setSelectedDay(null)}>Close</button>
+                        <div className={styles.headerActions}>
+                            <a
+                                href="https://www.faylib.org/v/assets/609"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={styles.officialLink}
+                            >
+                                View on Official Site ↗
+                            </a>
+                            <button className={styles.closeButton} onClick={() => setSelectedDay(null)}>Close</button>
+                        </div>
                     </div>
                     <div className={styles.detailsGrid}>
                         {availability.map(asset => {
@@ -148,7 +186,15 @@ export default function Calendar({ availability, currentDate, onMonthChange, req
                                     <div className={styles.slotsList}>
                                         {daySlots.map(slot => (
                                             <div key={slot.hour} className={`${styles.slot} ${slot.available ? styles.slotAvailable : styles.slotBusy}`}>
-                                                {slot.hour}:00 - {slot.available ? 'Open' : 'Booked'}
+                                                <span>{slot.hour}:00 - {slot.available ? 'Open' : 'Booked'}</span>
+                                                {slot.available && (
+                                                    <button
+                                                        className={styles.bookBtn}
+                                                        onClick={(e) => { e.stopPropagation(); handleOpenBooking(slot.hour); }}
+                                                    >
+                                                        Book
+                                                    </button>
+                                                )}
                                             </div>
                                         ))}
                                     </div>
@@ -157,6 +203,16 @@ export default function Calendar({ availability, currentDate, onMonthChange, req
                         })}
                     </div>
                 </div>
+            )}
+
+            {isBookingModalOpen && selectedDay && bookingSlot !== null && (
+                <BookingModal
+                    isOpen={isBookingModalOpen}
+                    onClose={() => setIsBookingModalOpen(false)}
+                    date={selectedDay}
+                    slot={bookingSlot}
+                    selectedAssets={getBookingData()}
+                />
             )}
         </div>
     );
