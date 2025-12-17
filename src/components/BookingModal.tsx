@@ -17,6 +17,8 @@ export default function BookingModal({ isOpen, onClose, date, slot, selectedAsse
     const [step, setStep] = useState<'login' | 'confirm' | 'success' | 'error'>('login');
     const [barcode, setBarcode] = useState('');
     const [pin, setPin] = useState('');
+    const [agreedCost, setAgreedCost] = useState(false);
+    const [agreedTraining, setAgreedTraining] = useState(false);
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
     const [patronData, setPatronData] = useState<any>(null);
@@ -49,6 +51,11 @@ export default function BookingModal({ isOpen, onClose, date, slot, selectedAsse
     };
 
     const handleBook = async () => {
+        if (!agreedCost || !agreedTraining) {
+            setErrorMsg("Please agree to the required terms.");
+            return;
+        }
+
         setLoading(true);
         const results = [];
 
@@ -78,6 +85,14 @@ export default function BookingModal({ isOpen, onClose, date, slot, selectedAsse
                 fines: []
             };
 
+            // Construct custom questions
+            // derived from full_asset_data.json
+            const customQuestions = {
+                "field_RFJLWgtS": agreedCost ? "Yes" : "No",
+                "field_ozMFFjbX": agreedTraining ? "Yes" : "No",
+                "field_AyNGUYSO": "" // Optional late arrival field, left empty
+            };
+
             const payload = {
                 client_id: CLIENT_ID,
                 location_id: LOCATION_ID,
@@ -91,7 +106,7 @@ export default function BookingModal({ isOpen, onClose, date, slot, selectedAsse
                 last_name: patronData.data.names[0].last_name,
                 email: patronData.data.emails?.[0] || '',
                 cell: patronData.data.phones?.[0] || '',
-                custom_questions: "",
+                custom_questions: JSON.stringify(customQuestions),
                 patron_data: JSON.stringify(patronPayload),
                 booking_source: "WEB_V1",
                 availability_type: "INPERSON"
@@ -176,6 +191,30 @@ export default function BookingModal({ isOpen, onClose, date, slot, selectedAsse
                                     </li>
                                 ))}
                             </ul>
+                        </div>
+
+                        <div className={styles.agreements}>
+                            {errorMsg && <div className={styles.error}>{errorMsg}</div>}
+                            <div className={styles.checkboxField}>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        checked={agreedCost}
+                                        onChange={e => setAgreedCost(e.target.checked)}
+                                    />
+                                    I understand that I will be charged for the cost of printing ($0.05/g PLA, $0.07/g Composite).
+                                </label>
+                            </div>
+                            <div className={styles.checkboxField}>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        checked={agreedTraining}
+                                        onChange={e => setAgreedTraining(e.target.checked)}
+                                    />
+                                    I have completed the 3D print learning lab and feel confident using the machines.
+                                </label>
+                            </div>
                         </div>
 
                         <button className={styles.submitBtn} onClick={handleBook} disabled={loading}>
