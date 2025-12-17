@@ -123,7 +123,11 @@ export default function BookingModal({ isOpen, onClose, date, slot, selectedAsse
                 if (res.ok && responseData.status === 'success') {
                     results.push({ name: assetGroup.groupName, success: true });
                 } else {
-                    results.push({ name: assetGroup.groupName, success: false, msg: responseData.message || 'Failed' });
+                    let msg = responseData.message || 'Failed';
+                    if (msg === 'assets.booking.nolongeravailable') {
+                        msg = "Booking failed. Use Limit Reached: You may only have one active 3D printer reservation at a time.";
+                    }
+                    results.push({ name: assetGroup.groupName, success: false, msg });
                 }
             } catch (err: any) {
                 results.push({ name: assetGroup.groupName, success: false, msg: err.message });
